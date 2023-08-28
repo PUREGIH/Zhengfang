@@ -3,13 +3,16 @@ import urllib.parse
 import os
 import re
 from lxml import etree
+from config import Config
 from ProcessingImage import *
 from prettytable import PrettyTable
 import pandas as pd
 import execjs
 from PIL import Image
 
-base_url = 'http://119.6.108.206:777'  # 替换为你们学校正方教务url
+config = Config()
+school = str(config.getRaw('config', '学校'))
+base_url = school
 
 HEADERS = {
     "Referer": "",

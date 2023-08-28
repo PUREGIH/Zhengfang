@@ -12,7 +12,7 @@ def get_captcha(n=200):
     # 循环执行200次
     for i in range(n):
         # 访问网页，获取页面源代码
-        url = "http://119.6.108.206:777/default2.aspx"
+        url = "http://210.28.81.11/default2.aspx"
         response = s.get(url)
         selector = etree.HTML(response.content)
 
@@ -20,7 +20,7 @@ def get_captcha(n=200):
         SafeKey = selector.xpath("//div[@class='jympic']/img/@src")[0]
 
         # 验证码url
-        captcha_url = "http://119.6.108.206:777" + SafeKey
+        captcha_url = "http://210.28.81.11" + SafeKey
 
         captcha = s.get(captcha_url, stream=True).content
         # 保存验证码图片
