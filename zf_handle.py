@@ -11,14 +11,22 @@ import execjs
 from PIL import Image
 
 config = Config()
-school = str(config.getRaw('config', '学校'))
-base_url = school
+base_url = str(config.getRaw('config', '学校'))
+xh = str(config.getRaw('config', '学号'))
+password = str(config.getRaw('config', '密码'))
+
 
 HEADERS = {
     "Referer": "",
     "Upgrade-Insecure-Requests": "1",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36",
 }
+
+
+def getInfor(content, xpath):
+    selector = etree.HTML(content)
+    infor = selector.xpath(xpath)
+    return infor
 
 
 def zf_login(s, number, pwd, model):
@@ -92,11 +100,6 @@ def zf_login(s, number, pwd, model):
     # 登陆教务系统
     response = s.post(url, data=data, headers=headers)
     content = response.content.decode('utf-8')
-
-    def getInfor(content, xpath):
-        selector = etree.HTML(content)
-        infor = selector.xpath(xpath)
-        return infor
 
     # 获取学生基本信息
     student = getInfor(content, '//*[@id="xhxm"]/text()')

@@ -1,12 +1,11 @@
 import joblib
 import requests
-from config import Config
-from zf_handle import zf_login, zf_pj, zf_cj
+from zf_handle import zf_login, zf_pj, zf_cj, getInfor, HEADERS, base_url, xh, password
 
 # 初始化会话
-config = Config()
-xh = str(config.getRaw('config', '学号'))
-password = str(config.getRaw('config', '密码'))
+session_filename = 'session.pkl'
+
+saved_student_name = ''  # 初始学生姓名
 
 model = joblib.load('./model/clf1.model')  # 加载模型
 
@@ -26,38 +25,48 @@ def load_login_info():
         return None
 
 
-def save_session(session, filename):
-    with open(filename, 'wb') as f:
+def get_login_status(s):
+    url = f'{base_url}/xs_main.aspx?xh={xh}'
+    headers = HEADERS.copy()
+    response = s.get(url, headers=headers)
+    content = response.content.decode('utf-8')
+
+    # 获取学生基本信息
+    student = getInfor(content, '//*[@id="xhxm"]/text()')
+    return student
+
+
+def create_session():
+    global saved_student_name
+    session = requests.session()
+    saved_student_name = zf_login(session, xh, password, model)
+    save_login_info(saved_student_name)
+    with open(session_filename, 'wb') as f:
         joblib.dump(session, f)
+    return session
 
 
-def load_session(filename):
+def get_session(session=None):
+    global saved_student_name
+    saved_student_name = load_login_info()
     try:
-        with open(filename, 'rb') as f:
-            return joblib.load(f)
+        with open(session_filename, 'rb') as f:
+            session = joblib.load(f)
     except FileNotFoundError:
-        return None
+        session = None
+
+    if not session or not get_login_status(session):
+        session = create_session()
+
+    return session
 
 
 def main():
     # 尝试从保存的文件中加载登录信息
-    session_filename = 'session.pkl'
-    saved_session = load_session(session_filename)
+    session = get_session()
 
-    saved_student_name = load_login_info()
-
-    if saved_session:
-        print('Using saved session.')
-        s = saved_session
-    else:
-        s = requests.session()
-        saved_student_name = zf_login(s, xh, password, model)
-        save_login_info(saved_student_name)
-
-    zf_cj(s, xh, saved_student_name)
-    zf_pj(s, xh, saved_student_name)
-
-    save_session(s, session_filename)
+    zf_cj(session, xh, saved_student_name)
+    zf_pj(session, xh, saved_student_name)
 
 
 if __name__ == "__main__":
